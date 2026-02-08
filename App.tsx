@@ -39,7 +39,10 @@ import {
     LandingPageBlueprint,
     FirstStrikeReport,
     ArchimedesProtocolReport,
-    ScoredProspect
+    ScoredProspect,
+    SovereignTask,
+    DiscoveredAudience,
+    B2CDiscoveredAudience
 } from './types';
 import { 
     generateLoneWolfReport, 
@@ -65,7 +68,10 @@ import {
     generateAICode,
     generateLandingPageBlueprint,
     generateLandingPageCode,
-    scoreProspectsList
+    scoreProspectsList,
+    generateArchimedesProtocol,
+    executeAgentTask,
+    generateMonetizationStrategy
 } from './services/geminiService';
 import { saveProjectToFirestore, getProjectsFromFirestore, deleteProjectFromFirestore, saveAgentsToFirestore, getAgentsFromFirestore } from './services/firebaseService';
 
@@ -92,20 +98,21 @@ const AppContent: React.FC = () => {
     const [competitiveDisplacementBrief, setCompetitiveDisplacementBrief] = useState<CompetitiveDisplacementBrief | null>(null);
     const [b2cDeconResult, setB2CDeconResult] = useState<B2CMarketDeconstruction | null>(null);
     
-    // Deep Recon State (Restored)
+    // Deep Recon State
     const [liveMarketIntelReport, setLiveMarketIntelReport] = useState<LiveMarketIntelReport | null>(null);
     const [demandSignalReport, setDemandSignalReport] = useState<DemandSignalReport | null>(null);
     const [opportunityRadarReport, setOpportunityRadarReport] = useState<OpportunityRadarReport | null>(null);
     const [edgarAnomalyReport, setEdgarAnomalyReport] = useState<EdgarAnomalyReport | null>(null);
     const [aiVideoFoundryReport, setAIVideoFoundryReport] = useState<AIVideoFoundryReport | null>(null);
     
-    // Fabrication State (Foundry, Code, Pages)
+    // Fabrication State
     const [generatedCode, setGeneratedCode] = useState<AICode | null>(null);
     const [landingPageBlueprint, setLandingPageBlueprint] = useState<LandingPageBlueprint | null>(null);
     const [landingPageCode, setLandingPageCode] = useState<AICode | null>(null);
     const [scoredProspects, setScoredProspects] = useState<ScoredProspect[] | null>(null);
+    const [archimedesProtocolReport, setArchimedesProtocolReport] = useState<ArchimedesProtocolReport | null>(null);
     
-    // Legacy support states (for MonetizationStrategyReport usage)
+    // Legacy support states
     const [monetizationStrategy, setMonetizationStrategy] = useState<MonetizationStrategy | null>(null);
     const [playbook, setPlaybook] = useState<HighLeveragePlaybook | null>(null);
     const [alphaAcquisitionPlaybook, setAlphaAcquisitionPlaybook] = useState<AlphaAcquisitionPlaybook | null>(null);
@@ -144,17 +151,16 @@ const AppContent: React.FC = () => {
         setLandingPageCode(null);
         setScoredProspects(null);
         setMonetizationStrategy(null);
+        setArchimedesProtocolReport(null);
     };
 
     const handleGenerate = async (newBrief: StrategicBrief) => {
         setIsLoading(true);
         setGenerationError(null);
         setBrief(newBrief);
-        
         clearAllReports();
 
         try {
-            console.log("Starting generation for:", newBrief.analysisType);
             switch (newBrief.analysisType) {
                 case 'aiVentureArchitect':
                     setAIVentureBlueprint(await generateAIVentureBlueprint(newBrief, isTurboMode));
@@ -208,35 +214,113 @@ const AppContent: React.FC = () => {
                     setAIVideoFoundryReport(await generateAIVideoFoundry(newBrief, isTurboMode));
                     break;
                 default:
-                    console.error("Analysis type not implemented:", newBrief.analysisType);
                     setGenerationError(`Unknown analysis type: ${newBrief.analysisType}`);
             }
         } catch (error: any) {
-            console.error("Generation failed", error);
-            setGenerationError(error.message || "An unexpected error occurred during generation.");
+            setGenerationError(error.message || "An unexpected error occurred.");
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleScoreProspects = async (rawList: string) => {
-        if (!analysisResult) {
-            alert("Please generate a B2B ICP Analysis first to define the scoring criteria.");
-            return;
-        }
+        if (!analysisResult) return;
         setIsLoading(true);
         try {
             const scores = await scoreProspectsList(rawList, analysisResult, isTurboMode);
             setScoredProspects(scores);
         } catch (error) {
-            console.error("Scoring failed", error);
             setGenerationError("Failed to score prospects.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    // --- FOUNDRY HANDLERS ---
+    const handleGenerateArchimedes = async (context: any) => {
+        setIsLoading(true);
+        try {
+            const result = await generateArchimedesProtocol(context, isTurboMode);
+            setArchimedesProtocolReport(result);
+            // Scroll to Archimedes section if visible
+            setTimeout(() => {
+                const el = document.getElementById('archimedes-report-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        } catch (error: any) {
+            setGenerationError(`Archimedes Protocol Failure: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAssignTask = async (agentId: string, taskBrief: string) => {
+        // Find agent
+        const agentIndex = workforce.findIndex(a => a.id === agentId);
+        if (agentIndex === -1) return;
+
+        // Add task to agent (Executing state)
+        const newTask: SovereignTask = {
+            id: Math.random().toString(36).substring(7),
+            brief: taskBrief,
+            status: 'Executing'
+        };
+
+        const updatedWorkforce = [...workforce];
+        const agent = { ...updatedWorkforce[agentIndex] };
+        agent.status = 'Active';
+        agent.tasks = [...(agent.tasks || []), newTask];
+        updatedWorkforce[agentIndex] = agent;
+        setWorkforce(updatedWorkforce);
+
+        try {
+            const result = await executeAgentTask(agent, taskBrief, isTurboMode);
+            
+            // Update workforce with results
+            const finalizedWorkforce = [...updatedWorkforce];
+            const finalizedAgent = { ...finalizedWorkforce[agentIndex] };
+            finalizedAgent.status = 'Idle';
+            finalizedAgent.tasks = finalizedAgent.tasks.map(t => 
+                t.id === newTask.id 
+                    ? { ...t, ...result, status: 'Completed' as const } 
+                    : t
+            );
+            finalizedWorkforce[agentIndex] = finalizedAgent;
+            setWorkforce(finalizedWorkforce);
+            
+            if (currentUser) {
+                await saveAgentsToFirestore(currentUser.uid, finalizedWorkforce);
+            }
+        } catch (error: any) {
+            console.error("Agent Execution Error:", error);
+            const errorWorkforce = [...updatedWorkforce];
+            const errorAgent = { ...errorWorkforce[agentIndex] };
+            errorAgent.status = 'Error';
+            errorAgent.tasks = errorAgent.tasks.map(t => 
+                t.id === newTask.id ? { ...t, status: 'Failed' as const } : t
+            );
+            errorWorkforce[agentIndex] = errorAgent;
+            setWorkforce(errorWorkforce);
+        }
+    };
+
+    const handleDeployAgents = async (play: any, sourceReportType: string) => {
+        setIsLoading(true);
+        try {
+            const newAgents = await generateSovereignAgents(play, sourceReportType, isTurboMode);
+            // Ensure unique IDs
+            const stampedAgents = newAgents.map(a => ({ ...a, id: a.id || `agent_${Math.random().toString(36).substring(7)}` }));
+            const updatedWorkforce = [...workforce, ...stampedAgents];
+            setWorkforce(updatedWorkforce);
+            if (currentUser) {
+                await saveAgentsToFirestore(currentUser.uid, updatedWorkforce);
+            }
+            setCurrentView('commandCenter');
+        } catch (error) {
+            setGenerationError("Failed to deploy agents.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleGenerateCode = async (prompt: string) => {
         setIsLoading(true);
@@ -244,7 +328,6 @@ const AppContent: React.FC = () => {
             const code = await generateAICode(prompt, isTurboMode);
             setGeneratedCode(code);
         } catch (error) {
-            console.error(error);
             setGenerationError("Failed to generate code.");
         } finally {
             setIsLoading(false);
@@ -252,20 +335,9 @@ const AppContent: React.FC = () => {
     };
 
     const handleGenerateCodeFromOpportunity = async (brief: OpportunityBrief) => {
-        // Robust fallback if the AI didn't generate deeply nested fields
         const solution = (brief.aiPoweredSolution || {}) as any;
         const mechanism = (solution.resultsInAdvanceMechanism || {}) as any;
-        const crowd = (brief.starvingCrowd || {}) as any;
-        const problem = (brief.aspirinProblem || {}) as any;
-
-        const prompt = `Create a fully functional micro-SaaS tool based on this concept:
-        Tool Name: ${mechanism.name || 'Micro-SaaS Tool'}
-        Description: ${mechanism.description || 'A calculator or generator to solve the user problem.'}
-        Target Audience: ${crowd.name || 'General Audience'}
-        Core Problem: ${problem.problem || 'Inefficiency'}
-        
-        The tool should be a single HTML file (with React/Tailwind CDN) that allows the user to input data and get a "Result-in-Advance". Make it look modern and professional (dark mode).`;
-        
+        const prompt = `Create a micro-SaaS tool: ${mechanism.name}. Desc: ${mechanism.description}.`;
         handleGenerateCode(prompt);
     };
 
@@ -275,8 +347,7 @@ const AppContent: React.FC = () => {
             const bp = await generateLandingPageBlueprint(prompt, isTurboMode);
             setLandingPageBlueprint(bp);
         } catch (error) {
-            console.error(error);
-            setGenerationError("Failed to generate landing page blueprint.");
+            setGenerationError("Failed to generate blueprint.");
         } finally {
             setIsLoading(false);
         }
@@ -289,26 +360,7 @@ const AppContent: React.FC = () => {
             const code = await generateLandingPageCode(landingPageBlueprint, isTurboMode);
             setLandingPageCode(code);
         } catch (error) {
-            console.error(error);
-            setGenerationError("Failed to code landing page.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleDeployAgents = async (play: any, sourceReportType: string) => {
-        setIsLoading(true);
-        try {
-            const newAgents = await generateSovereignAgents(play, sourceReportType, isTurboMode);
-            const updatedWorkforce = [...workforce, ...newAgents];
-            setWorkforce(updatedWorkforce);
-            if (currentUser) {
-                await saveAgentsToFirestore(currentUser.uid, updatedWorkforce);
-            }
-            setCurrentView('commandCenter');
-        } catch (error) {
-            console.error("Failed to deploy agents", error);
-            setGenerationError("Failed to deploy agents. Check console.");
+            setGenerationError("Failed to code page.");
         } finally {
             setIsLoading(false);
         }
@@ -321,12 +373,11 @@ const AppContent: React.FC = () => {
             const result = await generateHighLeveragePlaybook(monetizationStrategy, isTurboMode);
             setPlaybook(result);
         } catch (error) {
-            console.error(error);
             setGenerationError("Failed to generate Playbook.");
         } finally {
             setIsLoading(false);
         }
-    }
+    };
 
     const handleGenerateAcquisitionPlaybook = async () => {
         if (!playbook) return;
@@ -335,14 +386,29 @@ const AppContent: React.FC = () => {
             const result = await generateAlphaAcquisitionPlaybook(playbook, isTurboMode);
             setAlphaAcquisitionPlaybook(result);
         } catch (error) {
-            console.error(error);
-            setGenerationError("Failed to generate Acquisition Protocol.");
+            setGenerationError("Failed to generate Protocol.");
         } finally {
             setIsLoading(false);
         }
-    }
+    };
 
-    // Load projects and agents on login
+    const handleMonetize = async (audience: DiscoveredAudience | B2CDiscoveredAudience) => {
+        setIsLoading(true);
+        try {
+            const strategy = await generateMonetizationStrategy(audience, isTurboMode);
+            setMonetizationStrategy(strategy);
+            // Scroll to monetization section
+            setTimeout(() => {
+                const el = document.getElementById('monetization-report-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        } catch (error: any) {
+            setGenerationError(`Monetization Strategy Failure: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (currentUser) {
             getProjectsFromFirestore(currentUser.uid).then(setProjects);
@@ -412,7 +478,7 @@ const AppContent: React.FC = () => {
                                             imageFoundryResult={null}
                                             salesCopilotReport={null}
                                             sovereignEngineReport={null}
-                                            archimedesProtocolReport={null}
+                                            archimedesProtocolReport={archimedesProtocolReport}
                                             firstStrikeReport={null}
                                             aiVideoFoundryReport={aiVideoFoundryReport}
                                             edgarAnomalyReport={edgarAnomalyReport}
@@ -424,7 +490,7 @@ const AppContent: React.FC = () => {
                                             playbook={playbook}
                                             alphaAcquisitionPlaybook={alphaAcquisitionPlaybook}
                                             onScore={handleScoreProspects}
-                                            onMonetize={() => {}}
+                                            onMonetize={handleMonetize}
                                             onGeneratePlaybook={handleGeneratePlaybook}
                                             onGenerateAcquisitionPlaybook={handleGenerateAcquisitionPlaybook}
                                             onRediscover={() => {}}
@@ -449,7 +515,7 @@ const AppContent: React.FC = () => {
                                             onSaveProject={() => {}}
                                             onGenerateFirstStrike={() => {}}
                                             onGenerateAIVideoFoundry={() => {}}
-                                            onGenerateArchimedes={() => {}}
+                                            onGenerateArchimedes={handleGenerateArchimedes}
                                         />
                                     </div>
                                 </>
@@ -458,7 +524,7 @@ const AppContent: React.FC = () => {
                             {currentView === 'commandCenter' && (
                                 <AgentCommandCenter 
                                     workforce={workforce}
-                                    onAssignTask={() => {}}
+                                    onAssignTask={handleAssignTask}
                                     onBuildToolFromAgent={handleGenerateCode}
                                     onGoToStrategy={() => setCurrentView('strategy')}
                                 />

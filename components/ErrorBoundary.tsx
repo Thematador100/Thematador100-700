@@ -11,7 +11,10 @@ interface State {
   error: Error | null;
 }
 
-// Fix: Use Component directly from the react import to ensure proper TypeScript inheritance recognition
+/**
+ * ErrorBoundary class to catch rendering errors in the component tree.
+ * Fix: Inherit directly from Component<Props, State> to ensure TypeScript correctly resolves inherited members like this.props and this.setState.
+ */
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -27,18 +30,21 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  /**
+   * Fix: Arrow function property ensures 'this' context is bound to the instance,
+   * allowing access to inherited members this.props and this.setState.
+   */
   public handleDismiss = () => {
-    // Fix: Use inherited this.props to check for onReset callback
-    // Clear the parent state that caused the error
+    // Fix: Access this.props from inherited Component
     if (this.props.onReset) {
       this.props.onReset();
     }
-    // Fix: Use inherited this.setState to reset internal error state
-    // Reset the error boundary state
+    // Fix: Access this.setState from inherited Component
     this.setState({ hasError: false, error: null });
   };
 
   public render() {
+    // Fix: Access this.state from inherited Component
     if (this.state.hasError) {
       return (
         <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-8 text-center my-8 animate-fade-in">
@@ -62,7 +68,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Fix: Use inherited this.props to access children correctly
+    // Fix: Access this.props correctly from the inherited Component
     return this.props.children;
   }
 }

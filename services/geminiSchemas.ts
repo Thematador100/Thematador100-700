@@ -535,6 +535,58 @@ export const alphaSignalSchema = {
     }
 };
 
+export const archimedesProtocolSchema = {
+    type: Type.OBJECT,
+    properties: {
+        theMandate: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, corePrinciple: { type: Type.STRING }, affirmation: { type: Type.STRING } } },
+        theSovereignFoundry: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, workflow: { type: Type.ARRAY, items: { type: Type.STRING } } } },
+        theAgentCSuite: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, aiAgentProtocol: { type: Type.OBJECT, properties: { protocol: { type: Type.STRING }, rationale: { type: Type.STRING } } } } },
+        theOperatorsCockpit: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, yourRole: { type: Type.ARRAY, items: { type: Type.STRING } } } },
+        theSovereignArsenal: { 
+            type: Type.OBJECT, 
+            properties: { 
+                title: { type: Type.STRING }, 
+                description: { type: Type.STRING }, 
+                communicationsProtocol: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING }, serverlessFunctionCode: { type: Type.STRING } } },
+                visionProtocol: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING } } },
+                dataAcquisitionProtocol: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING } } },
+                voiceIntelligenceProtocol: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, description: { type: Type.STRING } } },
+                unconventionalToolsAndApis: { 
+                    type: Type.OBJECT, 
+                    properties: { 
+                        title: { type: Type.STRING }, 
+                        description: { type: Type.STRING }, 
+                        tools: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, useCase: { type: Type.STRING }, agentInteractionProtocol: { type: Type.STRING } } } } 
+                    } 
+                } 
+            } 
+        }
+    }
+};
+
+export const agentTaskExecutionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        status: { type: Type.STRING },
+        insight: { type: Type.STRING },
+        suggestedNextTask: { type: Type.STRING },
+        actionableOutput: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING },
+                    type: { type: Type.STRING },
+                    content: { type: Type.STRING }
+                }
+            }
+        }
+    }
+};
+
+// --- ADDED SCHEMAS FIXES ---
+
+// Fix: Add competitiveDisplacementBriefSchema
 export const competitiveDisplacementBriefSchema = {
     type: Type.OBJECT,
     properties: {
@@ -547,32 +599,18 @@ export const competitiveDisplacementBriefSchema = {
         },
         marketSizeEstimate: { type: Type.STRING },
         quantitativeModel: {
-             type: Type.OBJECT,
-             properties: {
-                 decisionScoreFormula: { type: Type.STRING },
-                 variableDefinitions: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { variable: { type: Type.STRING }, definition: { type: Type.STRING } } } }
-             }
+            type: Type.OBJECT,
+            properties: {
+                decisionScoreFormula: { type: Type.STRING },
+                variableDefinitions: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { variable: { type: Type.STRING }, definition: { type: Type.STRING } } } }
+            }
         },
         dataVisualizationSuite: {
-             type: Type.OBJECT,
-             properties: {
-                 decisionDecomposition: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: { type: Type.STRING }, value: { type: Type.NUMBER } } } },
-                 angleUplift: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { segment: { type: Type.STRING }, angle: { type: Type.STRING }, uplift: { type: Type.NUMBER } } } }
-             }
-        },
-        marketMindAnalysis: {
-             type: Type.OBJECT,
-             properties: {
-                 dominantEmotionalDrivers: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { emotion: { type: Type.STRING }, weight: { type: Type.NUMBER }, rationale: { type: Type.STRING } } } },
-                 hotButtonKeywords: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { keyword: { type: Type.STRING }, context: { type: Type.STRING } } } },
-                 psycholinguisticRoutingEngine: {
-                     type: Type.OBJECT,
-                     properties: {
-                         routingLogic: { type: Type.STRING },
-                         heroVariants: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { angle: { type: Type.STRING }, headline: { type: Type.STRING }, adHook: { type: Type.STRING } } } }
-                     }
-                 }
-             }
+            type: Type.OBJECT,
+            properties: {
+                decisionDecomposition: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: { type: Type.STRING }, value: { type: Type.NUMBER } } } },
+                angleUplift: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { segment: { type: Type.STRING }, angle: { type: Type.STRING }, uplift: { type: Type.NUMBER } } } }
+            }
         },
         aiPoweredWedge: {
             type: Type.OBJECT,
@@ -595,50 +633,34 @@ export const competitiveDisplacementBriefSchema = {
     }
 };
 
+// Fix: Add b2cMarketDeconstructionSchema
 export const b2cMarketDeconstructionSchema = {
     type: Type.OBJECT,
     properties: {
         definingInterests: { type: Type.ARRAY, items: { type: Type.STRING } },
         influentialBrands: { type: Type.ARRAY, items: { type: Type.STRING } },
         competitorBrands: { type: Type.ARRAY, items: { type: Type.STRING } },
-        customerPersonas: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    name: { type: Type.STRING },
-                    description: { type: Type.STRING }
-                }
-            }
-        },
-        b2cBuyingTriggers: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    trigger: { type: Type.STRING },
-                    implication: { type: Type.STRING }
-                }
-            }
-        },
+        customerPersonas: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, description: { type: Type.STRING } } } },
+        b2cBuyingTriggers: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { trigger: { type: Type.STRING }, implication: { type: Type.STRING } } } },
         marketMindAnalysis: {
-             type: Type.OBJECT,
-             properties: {
-                 dominantEmotionalDrivers: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { emotion: { type: Type.STRING }, weight: { type: Type.NUMBER }, rationale: { type: Type.STRING } } } },
-                 hotButtonKeywords: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { keyword: { type: Type.STRING }, context: { type: Type.STRING } } } },
-                 psycholinguisticRoutingEngine: {
-                     type: Type.OBJECT,
-                     properties: {
-                         routingLogic: { type: Type.STRING },
-                         heroVariants: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { angle: { type: Type.STRING }, headline: { type: Type.STRING }, adHook: { type: Type.STRING } } } }
-                     }
-                 }
-             }
+            type: Type.OBJECT,
+            properties: {
+                dominantEmotionalDrivers: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { emotion: { type: Type.STRING }, weight: { type: Type.NUMBER }, rationale: { type: Type.STRING } } } },
+                hotButtonKeywords: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { keyword: { type: Type.STRING }, context: { type: Type.STRING } } } },
+                psycholinguisticRoutingEngine: {
+                    type: Type.OBJECT,
+                    properties: {
+                        routingLogic: { type: Type.STRING },
+                        heroVariants: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { angle: { type: Type.STRING }, headline: { type: Type.STRING }, adHook: { type: Type.STRING } } } }
+                    }
+                }
+            }
         },
         methodology: { type: Type.ARRAY, items: { type: Type.STRING } }
     }
 };
 
+// Fix: Add liveMarketIntelSchema
 export const liveMarketIntelSchema = {
     type: Type.OBJECT,
     properties: {
@@ -690,6 +712,7 @@ export const liveMarketIntelSchema = {
     }
 };
 
+// Fix: Add demandSignalSchema
 export const demandSignalSchema = {
     type: Type.OBJECT,
     properties: {
@@ -715,7 +738,8 @@ export const demandSignalSchema = {
                     name: { type: Type.STRING },
                     type: { type: Type.STRING },
                     reachEstimate: { type: Type.STRING },
-                    engineeringAsMarketingPlay: { type: Type.STRING }
+                    engineeringAsMarketingPlay: { type: Type.STRING },
+                    url: { type: Type.STRING }
                 }
             }
         },
@@ -734,6 +758,7 @@ export const demandSignalSchema = {
     }
 };
 
+// Fix: Add opportunityRadarSchema
 export const opportunityRadarSchema = {
     type: Type.OBJECT,
     properties: {
@@ -746,8 +771,8 @@ export const opportunityRadarSchema = {
                 properties: {
                     trendName: { type: Type.STRING },
                     growthSignal: { type: Type.STRING },
-                    whyItMatters: { type: Type.STRING },
-                    sourceUrl: { type: Type.STRING }
+                    sourceUrl: { type: Type.STRING },
+                    whyItMatters: { type: Type.STRING }
                 }
             }
         },
@@ -780,6 +805,7 @@ export const opportunityRadarSchema = {
     }
 };
 
+// Fix: Add edgarAnomalySchema
 export const edgarAnomalySchema = {
     type: Type.OBJECT,
     properties: {
@@ -822,6 +848,7 @@ export const edgarAnomalySchema = {
     }
 };
 
+// Fix: Add aiVideoFoundrySchema
 export const aiVideoFoundrySchema = {
     type: Type.OBJECT,
     properties: {
@@ -857,6 +884,7 @@ export const aiVideoFoundrySchema = {
     }
 };
 
+// Fix: Add highLeveragePlaybookSchema
 export const highLeveragePlaybookSchema = {
     type: Type.OBJECT,
     properties: {
@@ -880,45 +908,11 @@ export const highLeveragePlaybookSchema = {
             }
         },
         marketingFunnel: { type: Type.ARRAY, items: { type: Type.STRING } },
-        finalWisdom: { type: Type.STRING },
-        
-        // B2B specific properties
-        searchAndAcquisitionProtocol: {
-            type: Type.OBJECT,
-            properties: {
-                alphaSignal: { type: Type.STRING },
-                leveragePoint: { type: Type.STRING },
-                protocolSteps: { type: Type.ARRAY, items: { type: Type.STRING } }
-            }
-        },
-        clientAcquisitionEngine: {
-            type: Type.OBJECT,
-            properties: {
-                tractionChannelAnalysis: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { channel: { type: Type.STRING }, rationale: { type: Type.STRING } } } },
-                dream100Protocol: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { targetDescription: { type: Type.STRING }, rationale: { type: Type.STRING } } } },
-                strategicPartnershipProtocol: { type: Type.OBJECT, properties: { idealPartnerProfile: { type: Type.STRING }, irresistibleOffer: { type: Type.STRING }, outreachAngle: { type: Type.STRING } } }
-            }
-        },
-
-        // B2C specific properties
-        asymmetricWedgeStrategy: {
-            type: Type.OBJECT,
-            properties: {
-                targetMicroTribe: { type: Type.STRING },
-                asymmetricWedge: {
-                    type: Type.OBJECT,
-                    properties: {
-                        idea: { type: Type.STRING },
-                        rationale: { type: Type.STRING },
-                        wedgeType: { type: Type.STRING }
-                    }
-                },
-                infiltrationPlan: { type: Type.ARRAY, items: { type: Type.STRING } }
-            }
-        }
+        finalWisdom: { type: Type.STRING }
     }
 };
 
+// Fix: Add alphaAcquisitionPlaybookSchema
 export const alphaAcquisitionPlaybookSchema = {
     type: Type.OBJECT,
     properties: {
@@ -938,6 +932,58 @@ export const alphaAcquisitionPlaybookSchema = {
                     triggerEvent: { type: Type.STRING },
                     signalIntelligence: { type: Type.STRING },
                     strategicApproach: { type: Type.STRING }
+                }
+            }
+        }
+    }
+};
+
+// New: Monetization Strategy Schema
+export const monetizationStrategySchema = {
+    type: Type.OBJECT,
+    properties: {
+        coreOpportunity: { type: Type.STRING },
+        productIdeas: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    ideaName: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    profitPotential: { type: Type.STRING },
+                    aiLeveragePoint: { type: Type.STRING },
+                    financialNarrative: { type: Type.STRING },
+                    pricingModel: {
+                        type: Type.OBJECT,
+                        properties: {
+                            tiers: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        name: { type: Type.STRING },
+                                        description: { type: Type.STRING },
+                                        pricePerMonth: { type: Type.STRING },
+                                        features: { type: Type.ARRAY, items: { type: Type.STRING } }
+                                    }
+                                }
+                            },
+                            additionalCharges: { type: Type.STRING }
+                        }
+                    },
+                    monetizationPathways: { type: Type.ARRAY, items: { type: Type.STRING } }
+                }
+            }
+        },
+        go_to_market_strategy: { type: Type.ARRAY, items: { type: Type.STRING } },
+        leadSourceProtocol: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    sourcePlatform: { type: Type.STRING },
+                    filteringCriteria: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    rationale: { type: Type.STRING }
                 }
             }
         }
