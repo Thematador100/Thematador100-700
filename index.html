@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='10'%3e%3c/circle%3e%3ccircle cx='12' cy='12' r='6'%3e%3c/circle%3e%3ccircle cx='12' cy='12' r='2'%3e%3c/circle%3e%3ccircle cx='12' cy='12' r='2'%3e%3c/circle%3e%3c/svg%3e" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AudienceAI: Predictive Prospecting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.16.0",
+    "react/": "https://esm.sh/react@19/",
+    "react": "https://esm.sh/react@19",
+    "react-dom/": "https://esm.sh/react-dom@19/",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@^1.4.1",
+    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^3.8.2",
+    "recharts": "https://esm.sh/recharts@^2.12.7",
+    "firebase/app": "https://esm.sh/firebase@10.12.0/app",
+    "firebase/auth": "https://esm.sh/firebase@10.12.0/auth?deps=firebase@10.12.0/app",
+    "firebase/firestore": "https://esm.sh/firebase@10.12.0/firestore?deps=firebase@10.12.0/app",
+    "firebase/": "https://esm.sh/firebase@10.12.0/"
+  }
+}
+</script>
+<style>
+  @media print {
+    /* Hide elements that are not for printing */
+    .no-print {
+      display: none !important;
+    }
+
+    /* Universal print reset for clean, paper-friendly output */
+    * {
+      background: transparent !important;
+      color: #000 !important; /* Black text */
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    /* Set the main page background */
+    body {
+      background-color: #fff !important;
+    }
+    
+    /* Ensure links are still identifiable */
+    a, a:visited {
+      text-decoration: underline;
+    }
+    
+    /* Make blockquotes and code blocks stand out a bit */
+    pre, blockquote {
+      border: 1px solid #999;
+      page-break-inside: avoid;
+    }
+
+    /* Ensure table headers are readable */
+    thead {
+      display: table-header-group; /* Recommended for print */
+    }
+
+    tr, img {
+      page-break-inside: avoid;
+    }
+    
+    /* Ensure borders are a light gray */
+    [class*="border-"] {
+      border-color: #ccc !important;
+    }
+    
+    /* Specific fixes for charts */
+    .recharts-text, .recharts-cartesian-axis-tick-value {
+        fill: #000 !important;
+    }
+    .recharts-bar-rectangle path {
+        fill: #ccc !important;
+    }
+    .heatmap-grid > div {
+        border: 1px solid #ccc !important;
+    }
+  }
+</style>
+</head>
+  <body class="bg-slate-900">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
