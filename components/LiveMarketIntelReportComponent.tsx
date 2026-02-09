@@ -1,18 +1,17 @@
 
 import React from 'react';
 import { LiveMarketIntelReport } from '../types';
+import AIEnhancementCard from './AIEnhancementCard';
 
 interface LiveMarketIntelReportProps {
     report: LiveMarketIntelReport;
 }
 
-// Enhanced safe render to create structured mini-tables for nested data
 const safeRender = (content: any): React.ReactNode => {
     if (typeof content === 'string') return content;
     if (typeof content === 'number') return content;
     if (content === null || content === undefined) return <span className="text-slate-600 italic">N/A</span>;
     
-    // If it's an array, list it cleanly
     if (Array.isArray(content)) {
         return (
             <ul className="list-disc list-inside space-y-1">
@@ -23,7 +22,6 @@ const safeRender = (content: any): React.ReactNode => {
         );
     }
 
-    // If it's an object, render key-value pairs in a mini grid
     if (typeof content === 'object') {
         return (
             <div className="grid grid-cols-1 gap-2 bg-slate-900/40 p-2 rounded border border-slate-800 mt-2">
@@ -72,7 +70,7 @@ const SentimentGauge: React.FC<{ sentiment: string, rationale: string, quotes: s
                     </h3>
                 </div>
                 <div className="text-right">
-                    <span className="text-[10px] bg-slate-900 px-2 py-1 rounded border border-slate-700 text-slate-400 font-mono">LIVE SIGNAL</span>
+                    <span className="text-[10px] bg-slate-900 px-2 py-1 rounded border border-slate-700 text-slate-400 font-mono text-emerald-400 animate-pulse">SEARCH GROUNDED</span>
                 </div>
             </div>
             
@@ -119,10 +117,17 @@ const LiveMarketIntelReportComponent: React.FC<LiveMarketIntelReportProps> = ({ 
                     </h2>
                 </div>
                 <div className="text-right">
-                    <p className="text-[10px] text-slate-500 uppercase font-mono">Analyst System: Gemini Pro 3</p>
-                    <p className="text-[10px] text-slate-500 uppercase font-mono">Date: {new Date().toLocaleDateString()}</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-mono">Analyst System: Gemini 3 (Search Grounded)</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-mono">Timestamp: {new Date().toLocaleTimeString()}</p>
                 </div>
             </div>
+
+            {/* 10X ENHANCEMENT LAYER */}
+            {report.aiEnhancement && (
+                <div className="mb-12">
+                    <AIEnhancementCard enhancement={report.aiEnhancement} />
+                </div>
+            )}
 
             {/* Executive Summary */}
             <div className="bg-slate-900/50 p-6 rounded-lg border-l-4 border-indigo-500 mb-8">
@@ -209,7 +214,7 @@ const LiveMarketIntelReportComponent: React.FC<LiveMarketIntelReportProps> = ({ 
             {/* Sources Footer */}
             <div className="mt-8 pt-6 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <h3 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Verified Sources</h3>
+                    <h3 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Verified Grounding Sources</h3>
                     <ul className="text-xs text-blue-400 space-y-1 font-mono">
                         {(report.sources || []).map((source, i) => (
                             <li key={i} className="truncate">

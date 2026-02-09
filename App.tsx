@@ -9,6 +9,7 @@ import ProjectManager from './components/ProjectManager';
 import FirebaseConfigModal from './components/FirebaseConfigModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './components/LandingPage';
+import TacticalVoiceAgent from './components/TacticalVoiceAgent';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { 
     StrategicBrief, 
@@ -531,6 +532,8 @@ const AppContent: React.FC = () => {
                             )}
                         </ErrorBoundary>
                     </main>
+
+                    <TacticalVoiceAgent />
 
                     <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
                     <FirebaseConfigModal isOpen={showFirebaseConfigModal} onClose={() => setShowFirebaseConfigModal(false)} />

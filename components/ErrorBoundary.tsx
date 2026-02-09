@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children?: ReactNode;
@@ -13,13 +13,16 @@ interface State {
 
 /**
  * ErrorBoundary class to catch rendering errors in the component tree.
- * Fix: Inherit directly from Component<Props, State> to ensure TypeScript correctly resolves inherited members like this.props and this.setState.
  */
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+class ErrorBoundary extends React.Component<Props, State> {
+  // Fix: Explicitly using React.Component ensures the compiler correctly maps state and props generics to this context.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+    };
+  }
 
   public static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
@@ -30,22 +33,24 @@ class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  /**
-   * Fix: Arrow function property ensures 'this' context is bound to the instance,
-   * allowing access to inherited members this.props and this.setState.
-   */
+  // Property initializer with arrow function preserves 'this' context
   public handleDismiss = () => {
-    // Fix: Access this.props from inherited Component
-    if (this.props.onReset) {
-      this.props.onReset();
+    // Fix: Accessing this.props through React.Component inheritance.
+    const { onReset } = this.props;
+    if (onReset) {
+      onReset();
     }
-    // Fix: Access this.setState from inherited Component
+    // Fix: Accessing this.setState through React.Component inheritance.
     this.setState({ hasError: false, error: null });
   };
 
-  public render() {
-    // Fix: Access this.state from inherited Component
-    if (this.state.hasError) {
+  public render(): ReactNode {
+    // Fix: Accessing this.state through React.Component inheritance.
+    const { hasError, error } = this.state;
+    // Fix: Accessing this.props through React.Component inheritance.
+    const { children } = this.props;
+
+    if (hasError) {
       return (
         <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-8 text-center my-8 animate-fade-in">
           <div className="text-4xl mb-4">⚠️</div>
@@ -55,7 +60,7 @@ class ErrorBoundary extends Component<Props, State> {
           </p>
           <div className="bg-slate-950 p-4 rounded-lg text-left overflow-auto max-h-32 mb-6 border border-slate-800">
             <p className="text-xs font-mono text-red-400 whitespace-pre-wrap">
-              {this.state.error?.toString()}
+              {error?.toString()}
             </p>
           </div>
           <button
@@ -68,8 +73,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Fix: Access this.props correctly from the inherited Component
-    return this.props.children;
+    return children;
   }
 }
 

@@ -1,17 +1,17 @@
 
-import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
+import * as Schemas from "./geminiSchemas";
 import { 
     StrategicBrief, 
-    GatekeeperBypassReport,
-    LoneWolfReport,
+    OpportunityBrief, 
+    AnalysisResult, 
+    LoneWolfReport, 
+    RealEstateAlphaReport,
     ChimericAgentReport,
-    SovereignAgent,
+    GatekeeperBypassReport,
     AIVentureBlueprint,
-    OpportunityBrief,
-    AnalysisResult,
     DominanceBlueprint,
     CashflowProtocolReport,
-    RealEstateAlphaReport,
     AlphaSignalReport,
     CompetitiveDisplacementBrief,
     B2CMarketDeconstruction,
@@ -20,323 +20,226 @@ import {
     OpportunityRadarReport,
     EdgarAnomalyReport,
     AIVideoFoundryReport,
+    MonetizationStrategy,
     HighLeveragePlaybook,
     AlphaAcquisitionPlaybook,
     AICode,
     LandingPageBlueprint,
     ScoredProspect,
+    SovereignAgent,
     ArchimedesProtocolReport,
-    SovereignTask,
-    MonetizationStrategy,
     DiscoveredAudience,
     B2CDiscoveredAudience
-} from '../types';
-import * as Schemas from './geminiSchemas';
+} from "../types";
 
-const getModel = (isTurboMode: boolean) => {
-    return isTurboMode ? "gemini-3-flash-preview" : "gemini-3-pro-preview";
-};
-
-// --- ROBUST JSON EXTRACTION ---
-const cleanJson = (text: string): string => {
-    if (!text) return "";
+const callGemini = async <T>(prompt: string, schema: any, isTurboMode: boolean, useSearch: boolean = false): Promise<{data: T, groundingMetadata?: any}> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const model = isTurboMode ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
     
-    // 1. Remove Markdown code blocks
-    let clean = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-    // 2. Aggressive JSON Extraction: Find the first '{' and last '}'
-    const firstOpenBrace = clean.indexOf('{');
-    const lastCloseBrace = clean.lastIndexOf('}');
+    const enhancedPrompt = `
+    ${prompt}
     
-    // Also check for Arrays
-    const firstOpenBracket = clean.indexOf('[');
-    const lastCloseBracket = clean.lastIndexOf(']');
-
-    // Determine if it looks like an Object or an Array
-    let isArray = false;
-    if (firstOpenBracket !== -1 && (firstOpenBrace === -1 || firstOpenBracket < firstOpenBrace)) {
-        isArray = true;
-    }
-
-    if (isArray) {
-        if (firstOpenBracket !== -1 && lastCloseBracket !== -1) {
-            return clean.substring(firstOpenBracket, lastCloseBracket + 1);
-        }
-    } else {
-        if (firstOpenBrace !== -1 && lastCloseBrace !== -1) {
-            return clean.substring(firstOpenBrace, lastCloseBrace + 1);
-        }
-    }
-
-    return clean;
-};
-
-const getApiKey = (): string | undefined => {
-    try {
-        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-            return process.env.API_KEY;
-        }
-    } catch (e) {}
-    return undefined;
-};
-
-const withTimeout = <T>(promise: Promise<T>, ms: number, msg: string): Promise<T> => {
-    let timer: any;
-    const timeout = new Promise<T>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(msg)), ms);
-    });
-    return Promise.race([
-        promise.then(res => { clearTimeout(timer); return res; }),
-        timeout
-    ]);
-};
-
-async function callGemini<T>(prompt: string, schema: any, isTurboMode: boolean): Promise<T> {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        throw new Error("Deployment Error: API Key is missing.");
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
-    const modelId = getModel(isTurboMode);
-    
-    try {
-        const response = await withTimeout<GenerateContentResponse>(
-            ai.models.generateContent({
-                model: modelId,
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: schema,
-                }
-            }),
-            60000,
-            "Request Timed Out."
-        );
-        
-        const text = response.text;
-        if (!text) throw new Error("Empty response.");
-
-        try {
-            const cleanedText = cleanJson(text);
-            return JSON.parse(cleanedText) as T;
-        } catch (parseError) {
-            throw new Error(`Failed to parse AI response.`);
-        }
-    } catch (e: any) {
-        throw e;
-    }
-}
-
-// --- SOVEREIGN ENGINE & ARCHIMEDES ---
-
-export const generateArchimedesProtocol = async (context: any, isTurboMode: boolean): Promise<ArchimedesProtocolReport> => {
-    const prompt = `
-    Context: ${JSON.stringify(context)}
-    
-    You are Archimedes, the Architect of Global Leverage. 
-    Design a master automation protocol to execute the strategy defined in the context.
-    
-    Requirements:
-    1. **Mandate**: Define the core principle of this empire.
-    2. **Foundry**: Outline an automated asset creation workflow.
-    3. **C-Suite**: Define a team of AI Agents.
-    4. **Arsenal**: Suggest specific communication, data, and vision tools (APIs, tools).
+    CRITICAL INSTRUCTION FOR COMPETITIVE ADVANTAGE:
+    You MUST generate a high-level 'aiEnhancement' object. 
+    1. 'the10xIdea': A strategy to make this tool 10x better using predictive AI, real-time intent decoding, or automated asymmetric data fusion.
+    2. 'competitiveAdvantage': Why this idea creates an UNFAIR advantage that a competitor using basic automation cannot replicate.
+    3. 'godTierPrompt': A massive (500+ words) prompt that the user can paste into an AI to build the actual code or system for this 10x enhancement.
     `;
-    return callGemini<ArchimedesProtocolReport>(prompt, Schemas.archimedesProtocolSchema, isTurboMode);
-};
 
-export const executeAgentTask = async (agent: SovereignAgent, taskBrief: string, isTurboMode: boolean): Promise<Partial<SovereignTask>> => {
-    const prompt = `
-    You are an AI Sovereign Agent.
-    Role: ${agent.agentType}
-    Overall Mission: ${agent.overallBrief}
-    
-    Current Task: ${taskBrief}
-    
-    TASK EXECUTION PROTOCOL:
-    1. Perform deep reasoning on how to execute this task for the user.
-    2. Provide a 'status' (Completed).
-    3. Provide an 'insight' explaining your logic.
-    4. Suggest the 'suggestedNextTask' for the user.
-    5. Generate 'actionableOutput' (at least 1 item). If the task is technical, return code snippets. If it's strategic, return a specific plan.
-    `;
-    return callGemini<Partial<SovereignTask>>(prompt, Schemas.agentTaskExecutionSchema, isTurboMode);
-};
-
-// --- ASSET GENERATION PROTOCOLS ---
-
-export const generateAICode = async (promptText: string, isTurboMode: boolean): Promise<AICode> => {
-    const prompt = `
-    You are an Expert Frontend Engineer (React/Tailwind).
-    TASK: ${promptText}
-    Return a SINGLE JSON object with a 'generatedCode' field (raw HTML string).
-    `;
-    const schema = { type: Type.OBJECT, properties: { generatedCode: { type: Type.STRING } } };
-    return callGemini<AICode>(prompt, schema, isTurboMode);
-};
-
-export const generateLandingPageBlueprint = async (promptText: string, isTurboMode: boolean): Promise<LandingPageBlueprint> => {
-    const prompt = `
-    Direct Response CRO Expert: Generate a high-converting Landing Page Blueprint for: ${promptText}.
-    Include Hero, Problem, Solution, Social Proof, CTA.
-    `;
-    const schema = {
-        type: Type.OBJECT,
-        properties: {
-            pageTitle: { type: Type.STRING },
-            sections: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        sectionType: { type: Type.STRING },
-                        headline: { type: Type.STRING },
-                        subheadline: { type: Type.STRING },
-                        body: { type: Type.STRING },
-                        ctaButtonText: { type: Type.STRING }
-                    }
-                }
-            }
-        }
+    const config: any = {
+        responseMimeType: "application/json",
+        responseSchema: schema,
     };
-    return callGemini<LandingPageBlueprint>(prompt, schema, isTurboMode);
-};
 
-export const generateLandingPageCode = async (blueprint: LandingPageBlueprint, isTurboMode: boolean): Promise<AICode> => {
-    const prompt = `
-    Convert this Landing Page Blueprint into a high-fidelity, single-file HTML/React/Tailwind page:
-    ${JSON.stringify(blueprint)}
-    `;
-    const schema = { type: Type.OBJECT, properties: { generatedCode: { type: Type.STRING } } };
-    return callGemini<AICode>(prompt, schema, isTurboMode);
-};
+    if (useSearch) {
+        config.tools = [{ googleSearch: {} }];
+    }
 
-// --- CORE ANALYSIS PROTOCOLS ---
-
-export const scoreProspectsList = async (prospectsList: string, analysisResult: AnalysisResult, isTurboMode: boolean): Promise<ScoredProspect[]> => {
-    const prompt = `
-    Predictive Sales Analyst. Score these prospects against this ICP: ${analysisResult.sharedProfile.summary}.
-    List: ${prospectsList}
-    `;
-    return callGemini<ScoredProspect[]>(prompt, Schemas.scoredProspectsSchema, isTurboMode);
-};
-
-export const generateAIVentureBlueprint = async (brief: StrategicBrief, isTurboMode: boolean): Promise<AIVentureBlueprint> => {
-    const prompt = `Venture Architect: Design a Micro-SaaS based on: ${JSON.stringify(brief)}.`;
-    return callGemini<AIVentureBlueprint>(prompt, Schemas.aiVentureBlueprintSchema, isTurboMode);
+    const response = await ai.models.generateContent({
+        model: model,
+        contents: enhancedPrompt,
+        config: config,
+    });
+    
+    if (!response.text) {
+        throw new Error("AI returned an empty response.");
+    }
+    
+    return {
+        data: JSON.parse(response.text.trim()) as T,
+        groundingMetadata: response.candidates?.[0]?.groundingMetadata
+    };
 };
 
 export const generateOpportunityBrief = async (brief: StrategicBrief, isTurboMode: boolean): Promise<OpportunityBrief> => {
     const prompt = `Market Detective: Find a 'Starving Crowd' opportunity in: ${JSON.stringify(brief)}.`;
-    return callGemini<OpportunityBrief>(prompt, Schemas.opportunityBriefSchema, isTurboMode);
+    const res = await callGemini<OpportunityBrief>(prompt, Schemas.opportunityBriefSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateB2BAnalysis = async (brief: StrategicBrief, isTurboMode: boolean): Promise<AnalysisResult> => {
-    const prompt = `B2B Intelligence: Create ICP for: ${JSON.stringify(brief)}.`;
-    return callGemini<AnalysisResult>(prompt, Schemas.analysisResultSchema, isTurboMode);
-};
-
-export const generateDominanceBlueprint = async (brief: StrategicBrief, isTurboMode: boolean): Promise<DominanceBlueprint> => {
-    const prompt = `PE Strategist: Create Dominance Blueprint for: ${JSON.stringify(brief)}.`;
-    return callGemini<DominanceBlueprint>(prompt, Schemas.dominanceBlueprintSchema, isTurboMode);
-};
-
-export const generateCashflowProtocol = async (brief: StrategicBrief, isTurboMode: boolean): Promise<CashflowProtocolReport> => {
-    const prompt = `Crisis Turnaround Expert: 48-Hour Cashflow Protocol for: ${JSON.stringify(brief)}.`;
-    return callGemini<CashflowProtocolReport>(prompt, Schemas.cashflowProtocolSchema, isTurboMode);
-};
-
-export const generateRealEstateAlpha = async (brief: StrategicBrief, isTurboMode: boolean): Promise<RealEstateAlphaReport> => {
-    const prompt = `RE Hedge Fund Analyst: Esoteric Alpha for: ${JSON.stringify(brief)}.`;
-    return callGemini<RealEstateAlphaReport>(prompt, Schemas.realEstateAlphaSchema, isTurboMode);
-};
-
-export const generateAlphaSignalReport = async (brief: StrategicBrief, isTurboMode: boolean): Promise<AlphaSignalReport> => {
-    const prompt = `Quant Analyst: Alpha Signal Report for: ${JSON.stringify(brief)}.`;
-    return callGemini<AlphaSignalReport>(prompt, Schemas.alphaSignalSchema, isTurboMode);
-};
-
-export const generateGatekeeperBypassReport = async (brief: StrategicBrief, isTurboMode: boolean): Promise<GatekeeperBypassReport> => {
-    const prompt = `JV Dealmaker: Asset Leverage Protocol for: ${JSON.stringify(brief)}.`;
-    return callGemini<GatekeeperBypassReport>(prompt, Schemas.gatekeeperBypassReportSchema, isTurboMode);
+    const prompt = `B2B Intelligence: Create ICP for: ${JSON.stringify(brief)}. Focus on identifying 'High-Intent' signals rather than just job titles.`;
+    const res = await callGemini<AnalysisResult>(prompt, Schemas.analysisResultSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateLoneWolfReport = async (brief: StrategicBrief, isTurboMode: boolean): Promise<LoneWolfReport> => {
-    const prompt = `Lone Wolf Deal Architect: Revenue Plays for: ${JSON.stringify(brief)}.`;
-    return callGemini<LoneWolfReport>(prompt, Schemas.loneWolfReportSchema, isTurboMode);
+    const prompt = `Lone Wolf Deal Architect: Revenue Plays for: ${JSON.stringify(brief)}. Ensure every play uses AI to eliminate 100% of human overhead.`;
+    const res = await callGemini<LoneWolfReport>(prompt, Schemas.loneWolfReportSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateRealEstateAlpha = async (brief: StrategicBrief, isTurboMode: boolean): Promise<RealEstateAlphaReport> => {
+    const prompt = `RE Hedge Fund Analyst: Esoteric Alpha for: ${JSON.stringify(brief)}. Use AI to find correlations between public records and private distress signals.`;
+    const res = await callGemini<RealEstateAlphaReport>(prompt, Schemas.realEstateAlphaSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateChimericAgentReport = async (brief: StrategicBrief, isTurboMode: boolean): Promise<ChimericAgentReport> => {
-    const prompt = `Chimeric Agent Strategist: Synthesis for: ${JSON.stringify(brief)}.`;
-    return callGemini<ChimericAgentReport>(prompt, Schemas.chimericAgentReportSchema, isTurboMode);
+    const prompt = `Persona Synthesis: Create a Chimeric Agent report for: ${JSON.stringify(brief)}.`;
+    const res = await callGemini<ChimericAgentReport>(prompt, (Schemas as any).chimericAgentSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateGatekeeperBypassReport = async (brief: StrategicBrief, isTurboMode: boolean): Promise<GatekeeperBypassReport> => {
+    const prompt = `JV Protocol: Gatekeeper Bypass strategy for: ${JSON.stringify(brief)}.`;
+    const res = await callGemini<GatekeeperBypassReport>(prompt, (Schemas as any).gatekeeperBypassSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateAIVentureBlueprint = async (brief: StrategicBrief, isTurboMode: boolean): Promise<AIVentureBlueprint> => {
+    const prompt = `Architect: AI Venture Blueprint for: ${JSON.stringify(brief)}.`;
+    const res = await callGemini<AIVentureBlueprint>(prompt, (Schemas as any).aiVentureBlueprintSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateDominanceBlueprint = async (brief: StrategicBrief, isTurboMode: boolean): Promise<DominanceBlueprint> => {
+    const prompt = `Kingmaker: Dominance Blueprint for: ${JSON.stringify(brief)}. Focus on building a Moat via proprietary AI logic.`;
+    const res = await callGemini<DominanceBlueprint>(prompt, (Schemas as any).dominanceBlueprintSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateCashflowProtocol = async (brief: StrategicBrief, isTurboMode: boolean): Promise<CashflowProtocolReport> => {
+    const prompt = `Closer: 48-Hour Cashflow Protocol for: ${JSON.stringify(brief)}.`;
+    const res = await callGemini<CashflowProtocolReport>(prompt, (Schemas as any).cashflowProtocolSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateAlphaSignalReport = async (brief: StrategicBrief, isTurboMode: boolean): Promise<AlphaSignalReport> => {
+    const prompt = `Quant: Alpha Signal Report for: ${JSON.stringify(brief)}. Find the asymmetric revenue triggers.`;
+    const res = await callGemini<AlphaSignalReport>(prompt, Schemas.alphaSignalSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateCompetitiveDisplacementBrief = async (brief: StrategicBrief, isTurboMode: boolean): Promise<CompetitiveDisplacementBrief> => {
-    const prompt = `Corporate Raider: Displacement Strategy for: ${JSON.stringify(brief)}.`;
-    return callGemini<CompetitiveDisplacementBrief>(prompt, Schemas.competitiveDisplacementBriefSchema, isTurboMode);
+    const prompt = `Wedge Strategy: Competitive Displacement for: ${JSON.stringify(brief)}. Use AI to identify the exact technical weakness of the incumbent.`;
+    const res = await callGemini<CompetitiveDisplacementBrief>(prompt, (Schemas as any).competitiveDisplacementSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateB2CDeconstruction = async (brief: StrategicBrief, isTurboMode: boolean): Promise<B2CMarketDeconstruction> => {
-    const prompt = `DTC Brand Architect: B2C Deconstruction for: ${JSON.stringify(brief)}.`;
-    return callGemini<B2CMarketDeconstruction>(prompt, Schemas.b2cMarketDeconstructionSchema, isTurboMode);
+    const prompt = `Consumer Analyst: B2C Deconstruction for: ${JSON.stringify(brief)}.`;
+    const res = await callGemini<B2CMarketDeconstruction>(prompt, (Schemas as any).b2cDeconSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateLiveMarketIntel = async (brief: StrategicBrief, isTurboMode: boolean): Promise<LiveMarketIntelReport> => {
-    const prompt = `Macro Strategist: Real-time Intel for: ${brief.marketTopic}.`;
-    return callGemini<LiveMarketIntelReport>(prompt, Schemas.liveMarketIntelSchema, isTurboMode);
+    const prompt = `Intel System: Live Market Intelligence for: ${JSON.stringify(brief)}. Browsing the live web for current trends, competitor moves, and news.`;
+    // ACTIVATE GOOGLE SEARCH GROUNDING
+    const res = await callGemini<LiveMarketIntelReport>(prompt, (Schemas as any).liveMarketIntelSchema, isTurboMode, true);
+    
+    // Enrich the data with grounding metadata if it exists
+    if (res.groundingMetadata?.groundingChunks) {
+        const sources = res.groundingMetadata.groundingChunks
+            .map((chunk: any) => chunk.web)
+            .filter((web: any) => web && web.uri);
+        res.data.sources = [...(res.data.sources || []), ...sources];
+    }
+    
+    return res.data;
 };
 
 export const generateDemandSignal = async (brief: StrategicBrief, isTurboMode: boolean): Promise<DemandSignalReport> => {
-    const prompt = `Predictive Behavioral Analyst: Buying Prob for: ${brief.marketTopic}.`;
-    return callGemini<DemandSignalReport>(prompt, Schemas.demandSignalSchema, isTurboMode);
+    const prompt = `Forecaster: Demand Signal Report for: ${JSON.stringify(brief)}. Use live search data to predict buying probability and intent decay.`;
+    // ACTIVATE GOOGLE SEARCH GROUNDING
+    const res = await callGemini<DemandSignalReport>(prompt, (Schemas as any).demandSignalSchema, isTurboMode, true);
+    return res.data;
 };
 
 export const generateOpportunityRadar = async (brief: StrategicBrief, isTurboMode: boolean): Promise<OpportunityRadarReport> => {
-    const prompt = `VC Scout: Opportunity Radar for: ${brief.marketTopic}.`;
-    return callGemini<OpportunityRadarReport>(prompt, Schemas.opportunityRadarSchema, isTurboMode);
+    const prompt = `Radar: Opportunity Radar for: ${JSON.stringify(brief)}. Use live market data to find real trends and growth signals.`;
+    const res = await callGemini<OpportunityRadarReport>(prompt, (Schemas as any).opportunityRadarSchema, isTurboMode, true);
+    return res.data;
 };
 
 export const generateEdgarAnomaly = async (brief: StrategicBrief, isTurboMode: boolean): Promise<EdgarAnomalyReport> => {
-    const prompt = `Forensic Accountant: Edgar Scan for: ${brief.marketTopic}.`;
-    return callGemini<EdgarAnomalyReport>(prompt, Schemas.edgarAnomalySchema, isTurboMode);
+    const prompt = `Forensic: Edgar Anomaly Scan for: ${JSON.stringify(brief)}. Browse actual SEC filings and financial reports via Google Search.`;
+    const res = await callGemini<EdgarAnomalyReport>(prompt, (Schemas as any).edgarAnomalySchema, isTurboMode, true);
+    return res.data;
 };
 
 export const generateAIVideoFoundry = async (brief: StrategicBrief, isTurboMode: boolean): Promise<AIVideoFoundryReport> => {
-    const prompt = `AI Video Director: Video Foundry for: ${brief.marketTopic}.`;
-    return callGemini<AIVideoFoundryReport>(prompt, Schemas.aiVideoFoundrySchema, isTurboMode);
-};
-
-export const generateSovereignAgents = async (play: any, sourceReportType: string, isTurboMode: boolean): Promise<SovereignAgent[]> => {
-    const prompt = `
-    Context: ${JSON.stringify(play)}
-    Source Report: ${sourceReportType}
-    Generate specialized AI Workforce (Sovereign Agents).
-    `;
-    return callGemini<SovereignAgent[]>(prompt, Schemas.sovereignAgentsSchema, isTurboMode);
+    const prompt = `Video Factory: AI Video Foundry Report for: ${JSON.stringify(brief)}.`;
+    const res = await callGemini<AIVideoFoundryReport>(prompt, (Schemas as any).aiVideoFoundrySchema, isTurboMode);
+    return res.data;
 };
 
 export const generateHighLeveragePlaybook = async (strategy: MonetizationStrategy, isTurboMode: boolean): Promise<HighLeveragePlaybook> => {
-    const prompt = `Billionaire Strategist: High Leverage Playbook for: ${JSON.stringify(strategy)}.`;
-    return callGemini<HighLeveragePlaybook>(prompt, Schemas.highLeveragePlaybookSchema, isTurboMode);
+    const prompt = `Strategist: High Leverage Playbook based on: ${JSON.stringify(strategy)}.`;
+    const res = await callGemini<HighLeveragePlaybook>(prompt, (Schemas as any).highLeveragePlaybookSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateAlphaAcquisitionPlaybook = async (playbook: HighLeveragePlaybook, isTurboMode: boolean): Promise<AlphaAcquisitionPlaybook> => {
-    const prompt = `Lead Gen Expert: Alpha Acquisition Protocol for: ${JSON.stringify(playbook)}.`;
-    return callGemini<AlphaAcquisitionPlaybook>(prompt, Schemas.alphaAcquisitionPlaybookSchema, isTurboMode);
+    const prompt = `Acquisition Expert: Alpha Acquisition Protocol based on: ${JSON.stringify(playbook)}.`;
+    const res = await callGemini<AlphaAcquisitionPlaybook>(prompt, (Schemas as any).alphaAcquisitionSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateAICode = async (prompt: string, isTurboMode: boolean): Promise<AICode> => {
+    const aiPrompt = `Engineer: Write functional frontend code for: ${prompt}.`;
+    const res = await callGemini<AICode>(aiPrompt, (Schemas as any).aiCodeSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateLandingPageBlueprint = async (prompt: string, isTurboMode: boolean): Promise<LandingPageBlueprint> => {
+    const aiPrompt = `Copywriter: Create a Landing Page Blueprint for: ${prompt}.`;
+    const res = await callGemini<LandingPageBlueprint>(aiPrompt, (Schemas as any).landingPageBlueprintSchema, isTurboMode);
+    return res.data;
+};
+
+export const generateLandingPageCode = async (blueprint: LandingPageBlueprint, isTurboMode: boolean): Promise<AICode> => {
+    const aiPrompt = `Engineer: Write the full HTML/Tailwind code for this blueprint: ${JSON.stringify(blueprint)}.`;
+    const res = await callGemini<AICode>(aiPrompt, (Schemas as any).aiCodeSchema, isTurboMode);
+    return res.data;
+};
+
+export const scoreProspectsList = async (list: string, icp: AnalysisResult, isTurboMode: boolean): Promise<ScoredProspect[]> => {
+    const prompt = `Rank these prospects based on the ICP: ${list}. ICP: ${JSON.stringify(icp)}.`;
+    const res = await callGemini<{ prospects: ScoredProspect[] }>(prompt, (Schemas as any).scoredProspectsSchema, isTurboMode);
+    return res.data.prospects;
+};
+
+export const generateArchimedesProtocol = async (context: any, isTurboMode: boolean): Promise<ArchimedesProtocolReport> => {
+    const prompt = `Architect: Generate the Archimedes ProtocolMaster Plan for: ${JSON.stringify(context)}.`;
+    const res = await callGemini<ArchimedesProtocolReport>(prompt, (Schemas as any).archimedesProtocolSchema, isTurboMode);
+    return res.data;
 };
 
 export const generateMonetizationStrategy = async (audience: DiscoveredAudience | B2CDiscoveredAudience, isTurboMode: boolean): Promise<MonetizationStrategy> => {
-    const prompt = `
-    You are a high-level Monetization Architect. 
-    Context: ${JSON.stringify(audience)}
-    
-    MISSION:
-    Develop a complete commercial strategy for this specific audience. 
-    1. Define the 'Core Opportunity'.
-    2. Create 2-3 'Product Ideas' with pricing tiers.
-    3. Outline the 'Go-to-Market' strategy.
-    4. Define a 'Lead Source Protocol' for immediate customer acquisition.
-    `;
-    return callGemini<MonetizationStrategy>(prompt, Schemas.monetizationStrategySchema, isTurboMode);
+    const prompt = `Monetization Expert: Strategy for: ${JSON.stringify(audience)}.`;
+    const res = await callGemini<MonetizationStrategy>(prompt, (Schemas as any).monetizationStrategySchema, isTurboMode);
+    return res.data;
+};
+
+export const generateSovereignAgents = async (play: any, sourceReportType: string, isTurboMode: boolean): Promise<SovereignAgent[]> => {
+    const prompt = `Manager: Instantiate 3 Sovereign Agents to execute: ${JSON.stringify(play)} from ${sourceReportType}.`;
+    const res = await callGemini<{ agents: SovereignAgent[] }>(prompt, (Schemas as any).sovereignAgentsSchema, isTurboMode);
+    return res.data.agents;
+};
+
+export const executeAgentTask = async (agent: SovereignAgent, taskBrief: string, isTurboMode: boolean): Promise<any> => {
+    const prompt = `Agent (${agent.agentType}): Execute task: ${taskBrief}. Context: ${agent.overallBrief}. Use live search grounding if current info is needed.`;
+    const res = await callGemini<any>(prompt, (Schemas as any).agentTaskResultSchema, isTurboMode, true);
+    return res.data;
 };

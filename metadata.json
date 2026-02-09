@@ -1,5 +1,7 @@
 {
-  "name": "700AudienceAI: Predictive Prospecting4",
+  "name": "AudienceAI: Predictive Prospecting",
   "description": "An AI-powered tool to identify and analyze high-potential audience segments for various products and investment offerings, using predictive analytics to generate detailed prospect profiles.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
